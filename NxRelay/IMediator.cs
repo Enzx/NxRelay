@@ -1,4 +1,4 @@
-﻿namespace NxRelay;
+namespace NxRelay;
 
 public interface IMediator
 {

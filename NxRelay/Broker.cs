@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -95,12 +95,16 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
         return new SubscriptionToken<TMessage>(id, this);
     }
 
-    public void Unsubscribe(SubscriptionToken<long> token)
+    public void Unsubscribe(SubscriptionToken<TMessage> token)
     {
         ArgumentNullException.ThrowIfNull(token);
         token.Dispose();
     }
     
+    /// <summary>
+    /// Removes the handler with the specified id if it exists.
+    /// Missing handlers are ignored so disposing a token twice is safe.
+    /// </summary>
     public void Unsubscribe(long id)
     {
         lock (_gate)
@@ -112,10 +116,8 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
                     disposable.Dispose();
                 }
             }
-            else
-            {
-                throw new InvalidOperationException($"No handler found with ID {id}.");
-            }
+            // ignore missing handlers to allow double disposal
+            // of subscription tokens without throwing
         }
     }
     

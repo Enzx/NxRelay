@@ -1,4 +1,4 @@
-﻿namespace NxRelay
+namespace NxRelay
 {
     public sealed class Handler<TMessage>(Action<TMessage> callback, Filter<TMessage>? filter = null)
         : IHandler<TMessage>, IDisposable

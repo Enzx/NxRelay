@@ -1,4 +1,4 @@
-﻿namespace NxRelay
+namespace NxRelay
 {
     public class CompositeFilter<TMessage, TFilter>(params TFilter[] filters) : Filter<TMessage>
         where TFilter : Filter<TMessage>

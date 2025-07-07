@@ -1,3 +1,3 @@
-﻿namespace NxRelay;
+namespace NxRelay;
 
 public interface IRequest<TResponse> { }

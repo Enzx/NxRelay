@@ -47,6 +47,12 @@ public class MediatorTests
             async () => await _mediator.SendAsync<UnregisteredRequest, string>(unregisteredRequest));
     }
 
+    [Test]
+    public void TestRegisterDuplicateHandlerThrows()
+    {
+        Assert.Throws<InvalidOperationException>(() => _mediator.Register(_eventHandler));
+    }
+
     [TearDown]
     public void TearDown()
     {

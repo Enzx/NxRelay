@@ -1,8 +1,5 @@
-﻿namespace NxRelay
+namespace NxRelay
 {
-    /// <summary>
-    /// A token representing a subscription.
-    /// </summary>
     /// <summary>
     /// A token representing a subscription.
     /// </summary>

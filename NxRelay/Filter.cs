@@ -1,4 +1,4 @@
-﻿namespace NxRelay
+namespace NxRelay
 {
     /// <summary>
     /// A filter that can be applied to a message handler to determine if the message should be handled.
