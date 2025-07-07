@@ -28,6 +28,7 @@ public class BrokerTests
     [Test]
     public Task PublishWithWrongTypeThrows()
     {
-        return Assert.ThrowsAsync<ArgumentException>(async () => await _broker.Publish(42));
+        Assert.ThrowsAsync<ArgumentException>(async () => await _broker.Publish(42));
+        return Task.CompletedTask;
     }
 }

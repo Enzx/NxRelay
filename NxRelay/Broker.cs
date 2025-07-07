@@ -61,16 +61,14 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
         }
         finally
         {
-            if (rented is not null) pool.Return(rented, clearArray: true);
+            if (rented is not null) pool.Return(rented, true);
         }
     }
-    
+
     public ValueTask Publish(object message, CancellationToken ct = default)
     {
         if (message is not TMessage typedMessage)
-        {
             throw new ArgumentException($"Message must be of type {typeof(TMessage)}", nameof(message));
-        }
 
         return Publish(typedMessage, ct);
     }
@@ -85,9 +83,7 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
         lock (_gate)
         {
             if (_handlers.TryGetValue(id, out _))
-            {
                 throw new InvalidOperationException($"Handler with ID {id} already exists.");
-            }
 
             _handlers[id] = handler;
         }
@@ -100,7 +96,7 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
         ArgumentNullException.ThrowIfNull(token);
         token.Dispose();
     }
-    
+
     /// <summary>
     /// Removes the handler with the specified id if it exists.
     /// Missing handlers are ignored so disposing a token twice is safe.
@@ -110,18 +106,13 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
         lock (_gate)
         {
             if (_handlers.TryRemove(id, out IHandler<TMessage>? handler))
-            {
                 if (handler is IDisposable disposable)
-                {
                     disposable.Dispose();
-                }
-            }
             // ignore missing handlers to allow double disposal
             // of subscription tokens without throwing
         }
     }
-    
-    
+
 
     /// <summary>
     /// Disposes of all handlers
@@ -131,21 +122,12 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
         lock (_gate)
         {
             foreach (KeyValuePair<long, IHandler<TMessage>> handler in _handlers)
-            {
                 if (handler.Value is IDisposable disposable)
-                {
                     disposable.Dispose();
-                }
-            }
 
             _handlers.Clear();
             _nextId = 0;
-            if (sp is IDisposable disposableSp)
-            {
-                disposableSp.Dispose();
-            }
+            if (sp is IDisposable disposableSp) disposableSp.Dispose();
         }
     }
-
-  
 }

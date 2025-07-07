@@ -4,5 +4,8 @@ public class RelayFilter<TMessage>(Func<TMessage, bool> predicate) : Filter<TMes
 {
     private readonly Func<TMessage, bool> _predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
 
-    public override bool Apply(TMessage message) => _predicate(message);
+    public override bool Apply(TMessage message)
+    {
+        return _predicate(message);
+    }
 }

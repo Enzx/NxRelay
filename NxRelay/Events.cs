@@ -2,110 +2,100 @@ using System.Collections.Concurrent;
 
 // ReSharper disable Unity.PerformanceCriticalCodeInvocation
 
-namespace NxRelay
+namespace NxRelay;
+
+/// <summary>
+/// Provides a loosely coupled event aggregation system.
+/// </summary>
+public interface ISubscriber
 {
+    IDisposable Subscribe<TMessage>(in IHandler<TMessage> handler);
+    IDisposable Subscribe<TMessage>(Action<TMessage> action);
+    IDisposable Subscribe<TMessage>(Action<TMessage> action, Filter<TMessage> filter);
+    IDisposable Subscribe<TMessage>(Action<TMessage> action, params Filter<TMessage>[] filters);
+}
+
+/// <summary>
+/// Default implementation combining publisher and subscriber behaviour.
+/// </summary>
+public sealed class Events : IDisposable, ISubscriber, IPublisher
+{
+    private readonly ConcurrentDictionary<Type, IPublisher?> _brokers = new(4, 10);
+
     /// <summary>
-    /// Provides a loosely coupled event aggregation system.
+    /// Publishes a message to all subscribers of the specified type.
     /// </summary>
-    public interface ISubscriber
+    public async Task<bool> Publish<TMessage>(TMessage message)
     {
-        IDisposable Subscribe<TMessage>(in IHandler<TMessage> handler);
-        IDisposable Subscribe<TMessage>(Action<TMessage> action);
-        IDisposable Subscribe<TMessage>(Action<TMessage> action, Filter<TMessage> filter);
-        IDisposable Subscribe<TMessage>(Action<TMessage> action, params Filter<TMessage>[] filters);
+        if (message is null) throw new ArgumentNullException(nameof(message), "Message cannot be null");
+
+        Type messageType = typeof(TMessage);
+
+        if (!_brokers.TryGetValue(messageType, out IPublisher? publisher)) return false;
+        switch (publisher)
+        {
+            case IPublisher<TMessage> templatePublisher:
+                await templatePublisher.Publish(message).ConfigureAwait(false);
+                return true;
+            // If the publisher is not of type IPublisher<TMessage>, we assume it can handle the message
+            case null:
+                throw new InvalidOperationException($"No publisher found for message type {message.GetType()}");
+            default:
+                await publisher.Publish(message).ConfigureAwait(false);
+                return true;
+        }
     }
 
-    /// <summary>
-    /// Default implementation combining publisher and subscriber behaviour.
-    /// </summary>
-    public sealed class Events : IDisposable, ISubscriber, IPublisher
+    public IDisposable Subscribe<TMessage>(in IHandler<TMessage> handler)
     {
-        private readonly ConcurrentDictionary<Type, IPublisher?> _brokers = new(4, 10);
+        IPublisher? broker = _brokers.GetOrAdd(typeof(TMessage), _ => new Broker<TMessage>());
+        if (broker is Broker<TMessage> templateBroker) return templateBroker.Subscribe(handler);
 
-        /// <summary>
-        /// Publishes a message to all subscribers of the specified type.
-        /// </summary>
-        public async Task<bool> Publish<TMessage>(TMessage message)
+        throw new InvalidOperationException(
+            "Cannot subscribe to a message type that is not of the same type as the broker");
+    }
+
+    public IDisposable Subscribe<TMessage>(Action<TMessage> action)
+    {
+        return Subscribe(new Handler<TMessage>(action));
+    }
+
+    public IDisposable Subscribe<T>(Action<T> action, Filter<T> filter)
+    {
+        return Subscribe(new Handler<T>(action, filter));
+    }
+
+    public IDisposable Subscribe<TMessage>(Action<TMessage> action, params Filter<TMessage>[] filters)
+    {
+        return Subscribe(new Handler<TMessage>(action, new CompositeFilter<TMessage, Filter<TMessage>>(filters)));
+    }
+
+
+    public void Dispose()
+    {
+        foreach (KeyValuePair<Type, IPublisher?> broker in _brokers)
         {
+            IDisposable? disposable = broker.Value as IDisposable;
+            disposable?.Dispose();
+        }
+    }
 
-            if (message is null)
+    public async ValueTask Publish(object message, CancellationToken ct = default)
+    {
+        Type messageType = message.GetType();
+        if (_brokers.TryGetValue(messageType, out IPublisher? publisher))
+        {
+            if (publisher is IPublisher<object> templatePublisher)
             {
-                throw new ArgumentNullException(nameof(message), "Message cannot be null");
+                await templatePublisher.Publish(message, ct).ConfigureAwait(false);
             }
-
-            Type messageType = typeof(TMessage);
-            
-            if (!_brokers.TryGetValue(messageType, out IPublisher? publisher)) return false;
-            switch (publisher)
+            else
             {
-                case IPublisher<TMessage> templatePublisher:
-                    await templatePublisher.Publish(message).ConfigureAwait(false);
-                    return  true;
                 // If the publisher is not of type IPublisher<TMessage>, we assume it can handle the message
-                case null:
-                    throw new InvalidOperationException($"No publisher found for message type {message.GetType()}");
-                default:
-                    await publisher.Publish(message).ConfigureAwait(false);
-                    return  true;
+                if (publisher is null)
+                    throw new InvalidOperationException($"No publisher found for message type {messageType}");
+                await publisher.Publish(message, ct).ConfigureAwait(false);
             }
         }
-
-        public IDisposable Subscribe<TMessage>(in IHandler<TMessage> handler)
-        {
-            IPublisher? broker = _brokers.GetOrAdd(typeof(TMessage), _ => new Broker<TMessage>());
-            if (broker is Broker<TMessage> templateBroker)
-            {
-                return templateBroker.Subscribe(handler);
-            }
-
-            throw new InvalidOperationException(
-                "Cannot subscribe to a message type that is not of the same type as the broker");
-        }
-
-        public IDisposable Subscribe<TMessage>(Action<TMessage> action)
-        {
-            return Subscribe(new Handler<TMessage>(action));
-        }
-
-        public IDisposable Subscribe<T>(Action<T> action, Filter<T> filter)
-        {
-            return Subscribe(new Handler<T>(action, filter));
-        }
-
-        public IDisposable Subscribe<TMessage>(Action<TMessage> action, params Filter<TMessage>[] filters)
-        {
-            return Subscribe(new Handler<TMessage>(action, new CompositeFilter<TMessage, Filter<TMessage>>(filters)));
-        }
-
-
-        public void Dispose()
-        {
-            foreach (KeyValuePair<Type, IPublisher?> broker in _brokers)
-            {
-                IDisposable? disposable = broker.Value as IDisposable;
-                disposable?.Dispose();
-            }
-        }
-
-        public async ValueTask Publish(object message, CancellationToken ct = default)
-        {
-            Type messageType = message.GetType();
-            if (_brokers.TryGetValue(messageType, out IPublisher? publisher))
-            {
-                if (publisher is IPublisher<object> templatePublisher)
-                {
-                    await templatePublisher.Publish(message, ct).ConfigureAwait(false);
-                }
-                else
-                {
-                    // If the publisher is not of type IPublisher<TMessage>, we assume it can handle the message
-                    if (publisher is null)
-                        throw new InvalidOperationException($"No publisher found for message type {messageType}");
-                    await publisher.Publish(message, ct).ConfigureAwait(false);
-                }
-            }
-        }
-
-      
     }
 }
