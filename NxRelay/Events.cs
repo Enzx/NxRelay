@@ -4,6 +4,9 @@ using System.Collections.Concurrent;
 
 namespace NxRelay
 {
+    /// <summary>
+    /// Provides a loosely coupled event aggregation system.
+    /// </summary>
     public interface ISubscriber
     {
         IDisposable Subscribe<TMessage>(in IHandler<TMessage> handler);
@@ -12,10 +15,16 @@ namespace NxRelay
         IDisposable Subscribe<TMessage>(Action<TMessage> action, params Filter<TMessage>[] filters);
     }
 
+    /// <summary>
+    /// Default implementation combining publisher and subscriber behaviour.
+    /// </summary>
     public sealed class Events : IDisposable, ISubscriber, IPublisher
     {
         private readonly ConcurrentDictionary<Type, IPublisher?> _brokers = new(4, 10);
 
+        /// <summary>
+        /// Publishes a message to all subscribers of the specified type.
+        /// </summary>
         public async Task<bool> Publish<TMessage>(TMessage message)
         {
 
