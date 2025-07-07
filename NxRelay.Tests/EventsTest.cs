@@ -88,7 +88,9 @@ public class EventsTest
     [Test]
     public Task TestPublishNullMessageThrowsException()
     {
-        return Assert.ThrowsAsync<ArgumentNullException>(async () => await _events.Publish<string>(null!),
+        Assert.ThrowsAsync<ArgumentNullException>(async () => _ = await _events.Publish<string>(null!),
             "Publishing a null message should throw an ArgumentNullException.");
+        
+        return Task.CompletedTask;
     }
 }

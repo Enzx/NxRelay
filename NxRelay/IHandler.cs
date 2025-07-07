@@ -1,9 +1,7 @@
-namespace NxRelay
+namespace NxRelay;
+
+public interface IHandler<in TMessage>
 {
-    public interface IHandler<in TMessage>
-    {
-        
-        ValueTask HandleAsync(TMessage message, CancellationToken ct);
-        bool Filter(TMessage message);
-    }
+    ValueTask HandleAsync(TMessage message, CancellationToken ct);
+    bool Filter(TMessage message);
 }
