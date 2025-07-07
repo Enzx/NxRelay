@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 
 // ReSharper disable Unity.PerformanceCriticalCodeInvocation
 
@@ -30,13 +30,13 @@ namespace NxRelay
             switch (publisher)
             {
                 case IPublisher<TMessage> templatePublisher:
-                    await templatePublisher.Publish(message);
+                    await templatePublisher.Publish(message).ConfigureAwait(false);
                     return  true;
                 // If the publisher is not of type IPublisher<TMessage>, we assume it can handle the message
                 case null:
                     throw new InvalidOperationException($"No publisher found for message type {message.GetType()}");
                 default:
-                    await publisher.Publish(message);
+                    await publisher.Publish(message).ConfigureAwait(false);
                     return  true;
             }
         }
@@ -85,14 +85,14 @@ namespace NxRelay
             {
                 if (publisher is IPublisher<object> templatePublisher)
                 {
-                    await templatePublisher.Publish(message, ct);
+                    await templatePublisher.Publish(message, ct).ConfigureAwait(false);
                 }
                 else
                 {
                     // If the publisher is not of type IPublisher<TMessage>, we assume it can handle the message
                     if (publisher is null)
                         throw new InvalidOperationException($"No publisher found for message type {messageType}");
-                    await publisher.Publish(message, ct);
+                    await publisher.Publish(message, ct).ConfigureAwait(false);
                 }
             }
         }

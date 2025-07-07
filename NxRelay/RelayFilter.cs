@@ -1,4 +1,4 @@
-﻿namespace NxRelay;
+namespace NxRelay;
 
 public class RelayFilter<TMessage>(Func<TMessage, bool> predicate) : Filter<TMessage>
 {
