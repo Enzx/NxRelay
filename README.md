@@ -29,7 +29,8 @@ Register messaging services in your application startup:
 
 ```csharp
 var services = new ServiceCollection();
-services.AddMessaging();
+// Optionally pass assemblies that contain your handlers
+services.AddMessaging(typeof(MyHandler).Assembly);
 ```
 
 Inject `Events` or `IMediator` where needed and register handlers or publish messages.
