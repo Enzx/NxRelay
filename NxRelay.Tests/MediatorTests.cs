@@ -23,17 +23,18 @@ public class MediatorTests
     }
 
     private readonly EventHandler _eventHandler = new();
-    private readonly Mediator _mediator = new();
+    private Mediator _mediator;
 
     [SetUp]
     public void Setup()
     {
-        _mediator.Register(_eventHandler);
+        _mediator = new Mediator();
     }
 
     [Test]
     public async Task TestMediatorHandlesRequest()
     {
+        _mediator.Register(_eventHandler);
         Request request = new() { Message = "Hello, World!" };
         string response = await _mediator.SendAsync<Request, string>(request);
         Assert.That(response, Is.EqualTo("Processed: Hello, World!"));
@@ -43,14 +44,20 @@ public class MediatorTests
     public void TestMediatorThrowsOnUnregisteredRequest()
     {
         UnregisteredRequest unregisteredRequest = new() { Message = "This will fail" };
-        Assert.ThrowsAsync<InvalidOperationException>(
+        InvalidOperationException? ex = Assert.ThrowsAsync<InvalidOperationException>(
             async () => await _mediator.SendAsync<UnregisteredRequest, string>(unregisteredRequest));
+        Assert.That(ex, Is.Not.Null);
+        Assert.That(ex.Message, Is.EqualTo($"No handler for {nameof(UnregisteredRequest)}"));
     }
 
     [Test]
     public void TestRegisterDuplicateHandlerThrows()
     {
-        Assert.Throws<InvalidOperationException>(() => _mediator.Register(_eventHandler));
+        InvalidOperationException? ex = Assert.Throws<InvalidOperationException>(
+            () => _mediator.Register(_eventHandler));
+
+        Assert.That(ex, Is.Not.Null);
+        Assert.That(ex.Message, Is.EqualTo($"Handler already registered for {nameof(Request)}"));
     }
 
     [TearDown]
