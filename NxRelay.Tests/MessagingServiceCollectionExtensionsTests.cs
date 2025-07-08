@@ -5,12 +5,12 @@ namespace NxRelay.Tests;
 [TestFixture]
 public class MessagingServiceCollectionExtensionsTests
 {
-    private class TestRequest : IRequest<string>
+    public class TestRequest : IRequest<string>
     {
         public string Message { get; init; } = string.Empty;
     }
 
-    private class TestHandler : IRequestHandler<TestRequest, string>
+    public class TestHandler : IRequestHandler<TestRequest, string>
     {
         public ValueTask<string> HandleAsync(TestRequest request, CancellationToken ct)
         {
