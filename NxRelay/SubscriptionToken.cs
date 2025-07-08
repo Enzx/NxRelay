@@ -3,7 +3,7 @@ namespace NxRelay;
 /// <summary>
 /// A token representing a subscription.
 /// </summary>
-public readonly struct SubscriptionToken<TMessage> : IDisposable
+public readonly struct SubscriptionToken<TMessage> : IAsyncDisposable
 {
     public static readonly SubscriptionToken<TMessage> Empty = new(-1, null);
     private readonly Broker<TMessage>? _broker;
@@ -16,8 +16,14 @@ public readonly struct SubscriptionToken<TMessage> : IDisposable
         _broker = broker;
     }
 
-    public void Dispose()
+ 
+
+    public async ValueTask DisposeAsync()
     {
-        _broker?.Unsubscribe(Id);
+        if (_broker is null || Id < 0)
+            return;
+        
+        await _broker.Unsubscribe(Id);
+        
     }
 }

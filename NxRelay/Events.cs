@@ -9,10 +9,9 @@ namespace NxRelay;
 /// </summary>
 public interface ISubscriber
 {
-    IDisposable Subscribe<TMessage>(in IHandler<TMessage> handler);
-    IDisposable Subscribe<TMessage>(Action<TMessage> action);
-    IDisposable Subscribe<TMessage>(Action<TMessage> action, Filter<TMessage> filter);
-    IDisposable Subscribe<TMessage>(Action<TMessage> action, params Filter<TMessage>[] filters);
+    IAsyncDisposable Subscribe<TMessage>(in IHandler<TMessage> handler) where TMessage : notnull;
+    IAsyncDisposable Subscribe<TMessage>(Action<TMessage> action, Filter<TMessage> filter) where TMessage : notnull;
+    IAsyncDisposable Subscribe<TMessage>(Action<TMessage> action, params Filter<TMessage>[] filters) where TMessage : notnull;
 }
 
 /// <summary>
@@ -37,7 +36,6 @@ public sealed class Events : IDisposable, ISubscriber, IPublisher
             case IPublisher<TMessage> templatePublisher:
                 await templatePublisher.Publish(message).ConfigureAwait(false);
                 return true;
-            // If the publisher is not of type IPublisher<TMessage>, we assume it can handle the message
             case null:
                 throw new InvalidOperationException($"No publisher found for message type {message.GetType()}");
             default:
@@ -46,7 +44,7 @@ public sealed class Events : IDisposable, ISubscriber, IPublisher
         }
     }
 
-    public IDisposable Subscribe<TMessage>(in IHandler<TMessage> handler)
+    public IAsyncDisposable Subscribe<TMessage>(in IHandler<TMessage> handler) where TMessage : notnull
     {
         IPublisher? broker = _brokers.GetOrAdd(typeof(TMessage), _ => new Broker<TMessage>());
         if (broker is Broker<TMessage> templateBroker) return templateBroker.Subscribe(handler);
@@ -54,18 +52,14 @@ public sealed class Events : IDisposable, ISubscriber, IPublisher
         throw new InvalidOperationException(
             "Cannot subscribe to a message type that is not of the same type as the broker");
     }
+    
 
-    public IDisposable Subscribe<TMessage>(Action<TMessage> action)
-    {
-        return Subscribe(new Handler<TMessage>(action));
-    }
-
-    public IDisposable Subscribe<T>(Action<T> action, Filter<T> filter)
+    public IAsyncDisposable Subscribe<T>(Action<T> action, Filter<T> filter) where T : notnull
     {
         return Subscribe(new Handler<T>(action, filter));
     }
 
-    public IDisposable Subscribe<TMessage>(Action<TMessage> action, params Filter<TMessage>[] filters)
+    public IAsyncDisposable Subscribe<TMessage>(Action<TMessage> action, params Filter<TMessage>[] filters) where TMessage : notnull
     {
         return Subscribe(new Handler<TMessage>(action, new CompositeFilter<TMessage, Filter<TMessage>>(filters)));
     }

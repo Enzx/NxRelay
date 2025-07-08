@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NxRelay", "NxRelay\NxRelay.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NxRelay.Tests", "NxRelay.Tests\NxRelay.Tests.csproj", "{252F807F-5117-4D08-9965-777EB4479920}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Exmaples", "Exmaples\Exmaples.csproj", "{A91A2C08-4DEC-4DC9-9B30-8CFC89799875}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{252F807F-5117-4D08-9965-777EB4479920}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{252F807F-5117-4D08-9965-777EB4479920}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{252F807F-5117-4D08-9965-777EB4479920}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A91A2C08-4DEC-4DC9-9B30-8CFC89799875}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A91A2C08-4DEC-4DC9-9B30-8CFC89799875}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A91A2C08-4DEC-4DC9-9B30-8CFC89799875}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A91A2C08-4DEC-4DC9-9B30-8CFC89799875}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

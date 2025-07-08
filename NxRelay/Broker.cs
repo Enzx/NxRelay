@@ -9,15 +9,15 @@ namespace NxRelay;
 /// </summary>
 /// <typeparam name="TMessage"></typeparam>
 public sealed class Broker<TMessage>(IServiceProvider? sp = null)
-    : IPublisher<TMessage>, ISubscriber<TMessage>, IDisposable
+    : IPublisher<TMessage>, ISubscriber<TMessage>, IAsyncDisposable where TMessage : notnull
 {
-    private readonly object _gate = new();
+    private readonly object _mutex = new();
 
     private readonly ConcurrentDictionary<long, IHandler<TMessage>> _handlers = new(Environment.ProcessorCount, 128);
 
-    private long _nextId;
+    private long _nextHandlerId;
 
-    public IDisposable Subscribe<T>() where T : IHandler<TMessage>
+    public IAsyncDisposable Subscribe<T>() where T : IHandler<TMessage>
     {
         if (sp is null)
             throw new InvalidOperationException("ServiceProvider is not available. Cannot resolve handler.");
@@ -32,7 +32,7 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
     /// <param name="ct">Cancellation token to cancel the operation</param>
     public async ValueTask Publish(TMessage message, CancellationToken ct = default)
     {
-        lock (_gate)
+        lock (_mutex)
         {
             if (_handlers.IsEmpty) return;
         }
@@ -43,7 +43,7 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
 
         try
         {
-            lock (_gate)
+            lock (_mutex)
             {
                 rented = pool.Rent(_handlers.Count);
                 foreach (IHandler<TMessage> h in _handlers.Values)
@@ -51,7 +51,9 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
                     if (!h.Filter(message)) continue;
                     ValueTask vt = h.HandleAsync(message, ct);
                     if (!vt.IsCompletedSuccessfully)
+                    {
                         rented[count++] = vt.AsTask();
+                    }
                 }
             }
 
@@ -68,7 +70,9 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
     public ValueTask Publish(object message, CancellationToken ct = default)
     {
         if (message is not TMessage typedMessage)
+        {
             throw new ArgumentException($"Message must be of type {typeof(TMessage)}", nameof(message));
+        }
 
         return Publish(typedMessage, ct);
     }
@@ -77,13 +81,15 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
     /// Subscribes to the message type
     /// </summary>
     ///<param name="handler">a delegate to a function</param>
-    public IDisposable Subscribe(IHandler<TMessage> handler)
+    public IAsyncDisposable Subscribe(IHandler<TMessage> handler)
     {
-        long id = Interlocked.Increment(ref _nextId);
-        lock (_gate)
+        long id = Interlocked.Increment(ref _nextHandlerId);
+        lock (_mutex)
         {
             if (_handlers.TryGetValue(id, out _))
+            {
                 throw new InvalidOperationException($"Handler with ID {id} already exists.");
+            }
 
             _handlers[id] = handler;
         }
@@ -91,43 +97,54 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
         return new SubscriptionToken<TMessage>(id, this);
     }
 
-    public void Unsubscribe(SubscriptionToken<TMessage> token)
-    {
-        ArgumentNullException.ThrowIfNull(token);
-        token.Dispose();
-    }
-
     /// <summary>
     /// Removes the handler with the specified id if it exists.
     /// Missing handlers are ignored so disposing a token twice is safe.
     /// </summary>
-    public void Unsubscribe(long id)
+    public async ValueTask Unsubscribe(long id)
     {
-        lock (_gate)
+        IHandler<TMessage>? handler;
+        lock (_mutex)
         {
-            if (_handlers.TryRemove(id, out IHandler<TMessage>? handler))
-                if (handler is IDisposable disposable)
-                    disposable.Dispose();
-            // ignore missing handlers to allow double disposal
-            // of subscription tokens without throwing
+            if (!_handlers.TryRemove(id, out handler)) return;
         }
+
+        if (handler is IAsyncDisposable disposable)
+        {
+            await disposable.DisposeAsync().ConfigureAwait(false);
+        }
+        else if (handler is IDisposable syncDisposable)
+        {
+            syncDisposable.Dispose();
+        }
+        // else
+        // {
+        //     // If the handler is neither async nor sync disposable, we just ignore it.
+        //     // This is a no-op, but we could log a warning if needed.
+        // }
     }
 
 
     /// <summary>
     /// Disposes of all handlers
     /// </summary>
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        lock (_gate)
+        IEnumerable<Task> tasks;
+        lock (_mutex)
         {
-            foreach (KeyValuePair<long, IHandler<TMessage>> handler in _handlers)
-                if (handler.Value is IDisposable disposable)
-                    disposable.Dispose();
+            tasks = _handlers.Values.OfType<IAsyncDisposable>()
+                .Select(h => h.DisposeAsync().AsTask());
+        }
 
-            _handlers.Clear();
-            _nextId = 0;
-            if (sp is IDisposable disposableSp) disposableSp.Dispose();
+        await Task.WhenAll(tasks);
+    }
+
+    public override string ToString()
+    {
+        lock (_mutex)
+        {
+            return $"Broker<{typeof(TMessage).Name}> with {_handlers.Count} handlers";
         }
     }
 }

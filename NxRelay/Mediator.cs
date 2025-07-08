@@ -5,7 +5,7 @@ namespace NxRelay;
 /// <summary>
 /// Simple mediator for dispatching request/response messages.
 /// </summary>
-public class Mediator : IDisposable, IMediator
+public sealed class Mediator : IDisposable, IMediator
 {
     private readonly ConcurrentDictionary<Type, object> _requestHandlers = new();
 

@@ -9,18 +9,18 @@ public class BrokerTests
     public async Task PublishInvokesSubscribedHandler()
     {
         string? received = null;
-        IDisposable token = _broker.Subscribe(new Handler<string>(msg => received = msg));
+        IAsyncDisposable token = _broker.Subscribe(new Handler<string>(msg => received = msg));
         await _broker.Publish("hello");
         Assert.That(received, Is.EqualTo("hello"));
-        token.Dispose();
+        await token.DisposeAsync();
     }
 
     [Test]
     public async Task PublishAfterUnsubscribeDoesNotInvoke()
     {
         bool called = false;
-        IDisposable token = _broker.Subscribe(new Handler<string>(_ => called = true));
-        token.Dispose();
+        IAsyncDisposable token = _broker.Subscribe(new Handler<string>(_ => called = true));
+        await token.DisposeAsync();
         await _broker.Publish("ignored");
         Assert.That(called, Is.False);
     }

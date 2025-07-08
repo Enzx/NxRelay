@@ -4,7 +4,7 @@ namespace NxRelay.Tests;
 public class EventsTest
 {
     private readonly Events _events = new();
-    
+
     [Test]
     public async Task TestSubscribeAndPublish()
     {
@@ -15,7 +15,7 @@ public class EventsTest
 
         Assert.That(wasCalled, Is.True, "Event handler should have been called.");
     }
-    
+
     [Test]
     public async Task TestSubscribeWithFilterAndPublish()
     {
@@ -25,15 +25,15 @@ public class EventsTest
         _events.Subscribe(_ => wasCalled = true, filter);
 
         await _events.Publish("Test Message");
-        
+
         Assert.That(wasCalled, Is.True, "Event handler should have been called with filtered message.");
-        
+
         wasCalled = false;
         await _events.Publish("Another Message");
-        
+
         Assert.That(wasCalled, Is.False, "Event handler should not have been called with non-matching message.");
     }
-    
+
     [Test]
     public async Task TestSubscribeWithMultipleFiltersAndPublish()
     {
@@ -44,15 +44,15 @@ public class EventsTest
         _events.Subscribe(_ => wasCalled = true, filter1, filter2);
 
         await _events.Publish("Test Message");
-        
+
         Assert.That(wasCalled, Is.True, "Event handler should have been called with multiple filters.");
-        
+
         wasCalled = false;
         await _events.Publish("Short");
-        
+
         Assert.That(wasCalled, Is.False, "Event handler should not have been called with non-matching message.");
     }
-    
+
     [Test]
     public async Task TestSubscribeWithActionAndPublish()
     {
@@ -60,17 +60,17 @@ public class EventsTest
         _events.Subscribe<string>(message => wasCalled = true);
 
         await _events.Publish("Action Test Message");
-        
+
         Assert.That(wasCalled, Is.True, "Event handler with action should have been called.");
     }
-    
+
     [Test]
     public async Task TestUnsubscribe()
     {
         bool wasCalled = false;
-        IDisposable subscription = _events.Subscribe<string>(message => wasCalled = true);
+        IAsyncDisposable subscription = _events.Subscribe<string>(message => wasCalled = true);
 
-        subscription.Dispose();
+        await subscription.DisposeAsync();
 
         await _events.Publish("Test Message After Unsubscribe");
 
@@ -78,19 +78,20 @@ public class EventsTest
     }
 
     [Test]
-    public void TestDoubleDisposeDoesNotThrow()
+    public async Task TestDoubleDisposeDoesNotThrow()
     {
-        IDisposable subscription = _events.Subscribe<string>(_ => { });
-        subscription.Dispose();
-        Assert.DoesNotThrow(() => subscription.Dispose());
+        IAsyncDisposable subscription = _events.Subscribe<string>(_ => { });
+        await subscription.DisposeAsync();
+        Assert.DoesNotThrow(() => subscription.DisposeAsync().AsTask(),
+            "Double dispose of subscription should not throw an exception.");
     }
-    
+
     [Test]
     public Task TestPublishNullMessageThrowsException()
     {
         Assert.ThrowsAsync<ArgumentNullException>(async () => _ = await _events.Publish<string>(null!),
             "Publishing a null message should throw an ArgumentNullException.");
-        
+
         return Task.CompletedTask;
     }
 }
