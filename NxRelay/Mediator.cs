@@ -7,7 +7,7 @@ namespace NxRelay;
 /// </summary>
 public sealed class Mediator : IDisposable, IMediator
 {
-    private readonly ConcurrentDictionary<Type, object> _requestHandlers = new();
+    private readonly ConcurrentDictionary<Type, IRequestHandler> _requestHandlers = new();
 
     /// <summary>
     /// Registers a handler for a request type. Only one handler per request is allowed.
@@ -16,8 +16,7 @@ public sealed class Mediator : IDisposable, IMediator
         where TRequest : IRequest<TResponse>
     {
         if (!_requestHandlers.TryAdd(typeof(TRequest), handler))
-            throw new InvalidOperationException(
-                $"Handler already registered for {typeof(TRequest).Name}");
+            throw new InvalidOperationException($"Handler already registered for {typeof(TRequest).Name}");
     }
 
     /// <summary>
@@ -27,11 +26,10 @@ public sealed class Mediator : IDisposable, IMediator
         TRequest request, CancellationToken ct = default)
         where TRequest : IRequest<TResponse>
     {
-        if (_requestHandlers.TryGetValue(typeof(TRequest), out object? obj) &&
-            obj is IRequestHandler<TRequest, TResponse> h)
-            return h.HandleAsync(request, ct);
-        throw new InvalidOperationException(
-            $"No handler for {typeof(TRequest).Name}");
+        if (_requestHandlers.TryGetValue(typeof(TRequest), out IRequestHandler? h) &&
+            h is IRequestHandler<TRequest, TResponse> handler)
+            return handler.HandleAsync(request, ct);
+        throw new InvalidOperationException($"No handler for {typeof(TRequest).Name}");
     }
 
     public void Dispose()
