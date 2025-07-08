@@ -4,6 +4,17 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Version>0.0.1</Version>
+        <Title>Nx Relay</Title>
+        <Authors>Mohamad Iraji</Authors>
+        <Description>NxRelay is a small messaging library that provides two patterns:
+
+Events – a lightweight event aggregator that allows publishing messages to any number of subscribers.
+Mediator – a request/response dispatcher similar to the mediator pattern used in CQRS style applications.
+Both patterns can be used independently or together. The project targets .NET 8 and contains extension methods for registering handlers with the Microsoft.Extensions.DependencyInjection container.</Description>
+        <PackageLicenseUrl>https://github.com/Enzx/NxRelay?tab=MIT-1-ov-file</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/Enzx/NxRelay</RepositoryUrl>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <ItemGroup>
