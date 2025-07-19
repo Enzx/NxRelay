@@ -17,7 +17,7 @@ public static class MessagingServiceCollectionExtensions
         services.AddScoped<Events>();
         services.AddScoped<IMediator, Mediator>();
 
-        // 1️⃣  Assemblies we always scan: everything that’s part of the current app
+        //Assemblies we always scan: everything that’s part of the current app
         services.Scan(scan => scan
             .FromApplicationDependencies()
             .AddClasses(c => c.AssignableTo(typeof(IHandler<>)))
@@ -30,8 +30,8 @@ public static class MessagingServiceCollectionExtensions
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
-        // 2️⃣  Assemblies supplied explicitly (plugins, test assemblies, etc.)
-        if (extraAssemblies is { Length: > 0 })
+        //Assemblies supplied explicitly (plugins, test assemblies, etc.)
+        if (extraAssemblies.Length <= 0 ) return services;
         {
             services.Scan(scan => scan
                 .FromAssemblies(extraAssemblies)
