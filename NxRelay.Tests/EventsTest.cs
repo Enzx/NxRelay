@@ -20,11 +20,11 @@ public class EventsTest
     public async Task TestSubscribeWithFilterAndPublish()
     {
         bool wasCalled = false;
-        RelayFilter<string> filter = new(message => message.Contains("Test"));
+        RelayFilter<string> filter = new(message => message.Contains("TestSubscribeWithFilterAndPublish"));
 
         _events.Subscribe(_ => wasCalled = true, filter);
 
-        await _events.Publish("Test Message");
+        await _events.Publish("TestSubscribeWithFilterAndPublish");
 
         Assert.That(wasCalled, Is.True, "Event handler should have been called with filtered message.");
 
