@@ -14,7 +14,7 @@ public interface IMediator
     /// <summary>
     /// Sends a request and awaits the response from the registered handler.
     /// </summary>
-    ValueTask<TResponse> SendAsync<TRequest, TResponse>(
+    ValueTask<TResponse> Send<TRequest, TResponse>(
         TRequest request, CancellationToken ct = default)
         where TRequest : IRequest<TResponse>;
 }

@@ -10,7 +10,7 @@ public sealed class Handler<TMessage>(Action<TMessage> callback, Filter<TMessage
         return filter?.Apply(msg) ?? true;
     }
 
-    public ValueTask HandleAsync(TMessage msg, CancellationToken _)
+    public ValueTask Handle(TMessage msg, CancellationToken _)
     {
         _callback?.Invoke(msg);
         return ValueTask.CompletedTask;

@@ -3,7 +3,7 @@ namespace NxRelay;
 /// <summary>
 /// A token representing a subscription.
 /// </summary>
-public readonly struct SubscriptionToken<TMessage> : IAsyncDisposable
+public readonly struct SubscriptionToken<TMessage> : IAsyncDisposable where TMessage : notnull
 {
     public static readonly SubscriptionToken<TMessage> Empty = new(-1, null);
     private readonly Broker<TMessage>? _broker;

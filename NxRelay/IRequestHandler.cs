@@ -11,5 +11,5 @@ public interface IRequestHandler
 public interface IRequestHandler<in TRequest, TResponse> : IRequestHandler
     where TRequest : IRequest<TResponse>
 {
-    ValueTask<TResponse> HandleAsync(TRequest request, CancellationToken ct);
+    ValueTask<TResponse> Handle(TRequest request, CancellationToken ct);
 }

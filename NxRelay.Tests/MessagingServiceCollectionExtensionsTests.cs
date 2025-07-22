@@ -12,7 +12,7 @@ public class MessagingServiceCollectionExtensionsTests
 
     public class TestHandler : IRequestHandler<TestRequest, string>
     {
-        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken ct)
+        public ValueTask<string> Handle(TestRequest request, CancellationToken ct)
         {
             return new ValueTask<string>($"handled:{request.Message}");
         }

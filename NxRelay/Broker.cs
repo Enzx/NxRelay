@@ -49,7 +49,7 @@ public sealed class Broker<TMessage>(IServiceProvider? sp = null)
                 foreach (IHandler<TMessage> h in _handlers.Values)
                 {
                     if (!h.Filter(message)) continue;
-                    ValueTask vt = h.HandleAsync(message, ct);
+                    ValueTask vt = h.Handle(message, ct);
                     if (!vt.IsCompletedSuccessfully)
                     {
                         rented[count++] = vt.AsTask();

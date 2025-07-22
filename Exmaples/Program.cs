@@ -28,7 +28,7 @@ internal static class Program
 
         Mediator mediator = new();
         mediator.Register(new MyRequestHandler());
-        Response response = await mediator.SendAsync<Request, Response>(new Request("Hello, World!"));
+        Response response = await mediator.Send<Request, Response>(new Request("Hello, World!"));
         Console.WriteLine($"Response: {response.Content}");
         return 0;
     }
@@ -45,7 +45,7 @@ public readonly struct Response(string content)
 }
 public class MyRequestHandler : IRequestHandler<Request, Response>  
 {
-    public ValueTask<Response> HandleAsync(Request request, CancellationToken ct)
+    public ValueTask<Response> Handle(Request request, CancellationToken ct)
     {
         // Simulate some processing
         return new ValueTask<Response>(new Response($"Processed: {request.Content}"));

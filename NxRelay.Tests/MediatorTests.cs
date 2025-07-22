@@ -5,7 +5,7 @@ public class MediatorTests
 {
     private class EventHandler : IRequestHandler<Request, string>
     {
-        public async ValueTask<string> HandleAsync(Request request, CancellationToken ct)
+        public async ValueTask<string> Handle(Request request, CancellationToken ct)
         {
             await Task.Delay(1, ct);
             return $"Processed: {request.Message}";
@@ -36,7 +36,7 @@ public class MediatorTests
     {
         _mediator.Register(_eventHandler);
         Request request = new() { Message = "Hello, World!" };
-        string response = await _mediator.SendAsync<Request, string>(request);
+        string response = await _mediator.Send<Request, string>(request);
         Assert.That(response, Is.EqualTo("Processed: Hello, World!"));
     }
 
@@ -45,7 +45,7 @@ public class MediatorTests
     {
         UnregisteredRequest unregisteredRequest = new() { Message = "This will fail" };
         InvalidOperationException? ex = Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await _mediator.SendAsync<UnregisteredRequest, string>(unregisteredRequest));
+            async () => await _mediator.Send<UnregisteredRequest, string>(unregisteredRequest));
         Assert.That(ex, Is.Not.Null);
         Assert.That(ex.Message, Is.EqualTo($"No handler for {nameof(UnregisteredRequest)}"));
     }
