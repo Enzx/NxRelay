@@ -28,7 +28,7 @@ internal static class Program
 
         Mediator mediator = new();
         mediator.Register(new MyRequestHandler());
-        Response response = await mediator.Send<Request, Response>(new Request("Hello, World!"));
+        Response response = await mediator.Send(new Request("Hello, World!"));
         Console.WriteLine($"Response: {response.Content}");
         return 0;
     }

@@ -1,5 +1,5 @@
 namespace NxRelay;
 
-public interface IRequest<TResponse>
+public interface IRequest<out TResponse>
 {
 }
