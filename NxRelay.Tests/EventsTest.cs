@@ -64,11 +64,15 @@ public class EventsTest
         Assert.That(wasCalled, Is.True, "Event handler with action should have been called.");
     }
 
+    private struct DoNotCallMe
+    {
+        public string Message { get; set; }
+    }
     [Test]
     public async Task TestUnsubscribe()
     {
         bool wasCalled = false;
-        IAsyncDisposable subscription = _events.Subscribe<string>(message => wasCalled = true);
+        IAsyncDisposable subscription = _events.Subscribe<DoNotCallMe>(message => wasCalled = true);
 
         await subscription.DisposeAsync();
 

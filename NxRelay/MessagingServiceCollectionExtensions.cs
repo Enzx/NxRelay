@@ -26,7 +26,7 @@ public static class MessagingServiceCollectionExtensions
 
         services.Scan(scan => scan
             .FromApplicationDependencies()
-            .AddClasses(c => c.AssignableTo(typeof(IRequestHandler<,>)))
+            .AddClasses(c => c.AssignableTo(typeof(IRequestHandler)))
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
@@ -41,7 +41,7 @@ public static class MessagingServiceCollectionExtensions
 
             services.Scan(scan => scan
                 .FromAssemblies(extraAssemblies)
-                .AddClasses(c => c.AssignableTo(typeof(IRequestHandler<,>)))
+                .AddClasses(c => c.AssignableTo(typeof(IRequestHandler)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
         }

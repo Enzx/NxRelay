@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace NxRelay;
 
@@ -7,7 +8,11 @@ namespace NxRelay;
 /// </summary>
 public sealed class Mediator : IDisposable, IMediator
 {
+    private readonly IServiceProvider _sp;
     private readonly ConcurrentDictionary<Type, IHandlerWrapper> _requestHandlers = new();
+
+    public Mediator(IServiceProvider sp) => _sp = sp;
+    
 
     /// <summary>
     /// Registers a handler for a request type. Only one handler per request is allowed.
@@ -27,12 +32,19 @@ public sealed class Mediator : IDisposable, IMediator
         IRequest<TResponse> request, CancellationToken ct = default)
     {
         Type requestType = request.GetType();
-        if (_requestHandlers.TryGetValue(requestType, out IHandlerWrapper? wrapperObj))
-            return ((IHandlerWrapper<TResponse>)wrapperObj)
-                .Handle(request, ct);
+        IHandlerWrapper<TResponse> wrapper = (IHandlerWrapper<TResponse>)_requestHandlers.GetOrAdd(requestType,
+            static (t, state) =>
+            {
+                (IServiceProvider sp, Type responseType) = ((IServiceProvider, Type))state!;
+                Type handlerType = typeof(IRequestHandler<,>).MakeGenericType(t, responseType);
+                object handler = sp.GetRequiredService(handlerType);
+                Type wrapperType = typeof(HandlerWrapper<,>).MakeGenericType(t, responseType);
+                return (IHandlerWrapper)Activator.CreateInstance(wrapperType, handler)!;
+            }, (_sp, typeof(TResponse)));
 
-        throw new InvalidOperationException(
-            $"No handler for {requestType.Name}");
+        return wrapper.Handle(request, ct);
+
+      
     }
 
     public void Dispose()

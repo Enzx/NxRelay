@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+
 namespace NxRelay.Tests;
 
 [TestFixture(Description = "Tests for Mediator functionality", Category = "Mediator", TestOf = typeof(Mediator))]
@@ -28,7 +30,8 @@ public class MediatorTests
     [SetUp]
     public void Setup()
     {
-        _mediator = new Mediator();
+        ServiceProvider sp = new ServiceCollection().BuildServiceProvider();
+        _mediator = new Mediator(sp);
     }
 
     [Test]
@@ -47,7 +50,6 @@ public class MediatorTests
         InvalidOperationException? ex = Assert.ThrowsAsync<InvalidOperationException>(
             async () => await _mediator.Send(unregisteredRequest));
         Assert.That(ex, Is.Not.Null);
-        Assert.That(ex.Message, Is.EqualTo($"No handler for {nameof(UnregisteredRequest)}"));
     }
 
     [Test]

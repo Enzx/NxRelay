@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using Microsoft.Extensions.DependencyInjection;
 using NxRelay;
 
 namespace Exmaples;
@@ -25,8 +26,9 @@ internal static class Program
         await Task.WhenAll(tasks);
         await dispose.DisposeAsync();
         Console.WriteLine($"Counter reached: {counter}");
+        ServiceProvider sp = new ServiceCollection().BuildServiceProvider();
 
-        Mediator mediator = new();
+        Mediator mediator = new(sp);
         mediator.Register(new MyRequestHandler());
         Response response = await mediator.Send(new Request("Hello, World!"));
         Console.WriteLine($"Response: {response.Content}");
