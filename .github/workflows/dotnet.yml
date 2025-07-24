@@ -27,13 +27,16 @@ jobs:
         run: dotnet build NxRelay.sln --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test NxRelay.Tests/NxRelay.Tests.csproj \
-              --configuration Release --no-build \
-              --logger "trx;LogFileName=tests.trx" \
-              --collect:"XPlat Code Coverage" \
-              /p:CollectCoverage=true \
-              /p:CoverletOutput=TestResults/coverage/ \
-              /p:CoverletOutputFormat=cobertura
+        run: |
+          dotnet test \
+          -c Release \
+          --no-build \
+          --logger "trx;LogFileName=tests.trx" \
+          --collect "XPlat Code Coverage" \
+          /p:CollectCoverage=true \
+          /p:CoverletOutput=TestResults/coverage/ \
+          /p:CoverletOutputFormat=cobertura \
+          NxRelay.Tests/NxRelay.Tests.csproj
 
       - name: Upload test artifacts
         if: always()
