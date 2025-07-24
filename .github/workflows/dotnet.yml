@@ -16,12 +16,12 @@ jobs:
 
       - name: Setup .NET
       # v4 is the current major; adjust versions as you need
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
       - name: Restore
-      run: dotnet restore NxRelay.sln
+        run: dotnet restore NxRelay.sln
 
       - name: Build
         run: dotnet build NxRelay.sln --configuration Release --no-restore
